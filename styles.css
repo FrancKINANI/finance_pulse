@@ -1,0 +1,29 @@
+.stApp {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.metric-card {
+    background-color: #262730;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    margin: 0.5rem 0;
+    transition: transform 0.2s;
+}
+
+.metric-card:hover {
+    transform: translateY(-2px);
+}
+
+.chart-container {
+    background-color: #262730;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    margin: 1rem 0;
+}
+
+.stAlert {
+    padding: 1rem;
+    border-radius: 0.5rem;
+    margin: 1rem 0;
+}

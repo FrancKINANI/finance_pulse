@@ -1,0 +1,107 @@
+import streamlit as st
+import pandas as pd
+from utils import get_stock_data, create_price_chart, calculate_metrics, format_large_number
+
+# Page configuration
+st.set_page_config(
+    page_title="Stock Analysis Dashboard",
+    page_icon="📈",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# Load custom CSS
+with open('styles.css') as f:
+    st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
+
+# Sidebar
+st.sidebar.title('Stock Analysis Dashboard')
+ticker_symbol = st.sidebar.text_input('Enter Stock Symbol', value='AAPL').upper()
+time_period = st.sidebar.selectbox(
+    'Select Time Period',
+    ['1mo', '3mo', '6mo', '1y', '2y', '5y'],
+    index=3
+)
+
+# Main content
+if ticker_symbol:
+    # Fetch data
+    with st.spinner('Fetching stock data...'):
+        hist_data, company_info = get_stock_data(ticker_symbol, time_period)
+
+    if hist_data is not None and company_info is not None:
+        # Company header
+        col1, col2 = st.columns([2, 1])
+        with col1:
+            st.title(f"{company_info.get('longName', ticker_symbol)}")
+            st.markdown(f"*{company_info.get('sector', 'N/A')} | {company_info.get('industry', 'N/A')}*")
+        
+        with col2:
+            current_price = hist_data['Close'].iloc[-1]
+            price_change = current_price - hist_data['Close'].iloc[-2]
+            price_change_pct = (price_change / hist_data['Close'].iloc[-2]) * 100
+            
+            st.metric(
+                "Current Price",
+                f"${current_price:.2f}",
+                f"{price_change_pct:+.2f}%"
+            )
+
+        # Key metrics
+        st.subheader('Key Metrics')
+        metrics = calculate_metrics(hist_data)
+        col1, col2, col3, col4 = st.columns(4)
+        
+        with col1:
+            st.metric("Market Cap", format_large_number(company_info.get('marketCap', 0)))
+        with col2:
+            st.metric("P/E Ratio", f"{company_info.get('trailingPE', 0):.2f}")
+        with col3:
+            st.metric("52W High", f"${company_info.get('fiftyTwoWeekHigh', 0):.2f}")
+        with col4:
+            st.metric("52W Low", f"${company_info.get('fiftyTwoWeekLow', 0):.2f}")
+
+        # Price chart
+        st.subheader('Price Chart')
+        fig = create_price_chart(hist_data)
+        st.plotly_chart(fig, use_container_width=True)
+
+        # Additional company information
+        st.subheader('Company Overview')
+        with st.expander("Business Summary"):
+            st.write(company_info.get('longBusinessSummary', 'No information available'))
+
+        # Financial metrics table
+        st.subheader('Financial Metrics')
+        metrics_df = pd.DataFrame({
+            'Metric': [
+                'Revenue (TTM)',
+                'Profit Margin',
+                'Operating Margin',
+                'Return on Equity',
+                'Total Debt',
+                'Total Cash'
+            ],
+            'Value': [
+                format_large_number(company_info.get('totalRevenue', 0)),
+                f"{company_info.get('profitMargins', 0)*100:.2f}%",
+                f"{company_info.get('operatingMargins', 0)*100:.2f}%",
+                f"{company_info.get('returnOnEquity', 0)*100:.2f}%",
+                format_large_number(company_info.get('totalDebt', 0)),
+                format_large_number(company_info.get('totalCash', 0))
+            ]
+        })
+        st.table(metrics_df)
+
+    else:
+        st.error(f"Unable to fetch data for {ticker_symbol}. Please check the symbol and try again.")
+
+else:
+    st.info("Please enter a stock symbol to begin analysis.")
+
+# Footer
+st.markdown("""
+<div style='text-align: center; color: #666; padding: 20px;'>
+    Data provided by Yahoo Finance
+</div>
+""", unsafe_allow_html=True)
