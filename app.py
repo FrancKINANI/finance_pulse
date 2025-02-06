@@ -21,7 +21,7 @@ st.set_page_config(
 with open('styles.css') as f:
     st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
 
-# Initialize session state for stock symbol and period
+# Initialize session state
 if 'ticker_symbol' not in st.session_state:
     st.session_state.ticker_symbol = 'AAPL'
 if 'time_period' not in st.session_state:
@@ -29,6 +29,16 @@ if 'time_period' not in st.session_state:
 
 # Sidebar
 st.sidebar.title('Stock Analysis Dashboard')
+
+# Technical Indicators Section in Sidebar
+st.sidebar.subheader("Technical Indicators")
+show_indicators = {
+    'sma': st.sidebar.checkbox('Show SMA (20, 50)'),
+    'ema': st.sidebar.checkbox('Show EMA (20)'),
+    'bollinger': st.sidebar.checkbox('Show Bollinger Bands'),
+    'rsi': st.sidebar.checkbox('Show RSI'),
+    'macd': st.sidebar.checkbox('Show MACD')
+}
 
 # Recent Searches
 recent_searches = get_recent_searches()
@@ -110,9 +120,9 @@ if st.session_state.ticker_symbol:
         with col4:
             st.metric("52W Low", f"${company_info.get('fiftyTwoWeekLow', 0):.2f}")
 
-        # Price chart
+        # Price chart with technical indicators
         st.subheader('Price Chart')
-        fig = create_price_chart(hist_data)
+        fig = create_price_chart(hist_data, show_indicators)
         st.plotly_chart(fig, use_container_width=True)
 
         # Additional company information
