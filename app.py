@@ -21,6 +21,12 @@ st.set_page_config(
 with open('styles.css') as f:
     st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
 
+# Initialize session state for stock symbol and period
+if 'ticker_symbol' not in st.session_state:
+    st.session_state.ticker_symbol = 'AAPL'
+if 'time_period' not in st.session_state:
+    st.session_state.time_period = '1y'
+
 # Sidebar
 st.sidebar.title('Stock Analysis Dashboard')
 
@@ -30,15 +36,21 @@ if recent_searches:
     st.sidebar.subheader("Recent Searches")
     for search in recent_searches:
         if st.sidebar.button(f"{search.symbol} ({search.period})", key=f"recent_{search.id}"):
-            ticker_symbol = search.symbol
-            time_period = search.period
-else:
-    ticker_symbol = st.sidebar.text_input('Enter Stock Symbol', value='AAPL').upper()
-    time_period = st.sidebar.selectbox(
-        'Select Time Period',
-        ['1mo', '3mo', '6mo', '1y', '2y', '5y'],
-        index=3
-    )
+            st.session_state.ticker_symbol = search.symbol
+            st.session_state.time_period = search.period
+            st.rerun()
+
+# Manual input if no recent searches are selected
+ticker_input = st.sidebar.text_input('Enter Stock Symbol', value=st.session_state.ticker_symbol).upper()
+time_period = st.sidebar.selectbox(
+    'Select Time Period',
+    ['1mo', '3mo', '6mo', '1y', '2y', '5y'],
+    index=3
+)
+
+# Update session state from manual input
+st.session_state.ticker_symbol = ticker_input
+st.session_state.time_period = time_period
 
 # Watchlist
 st.sidebar.subheader("Watchlist")
@@ -47,30 +59,31 @@ for item in watchlist:
     col1, col2 = st.sidebar.columns([3, 1])
     with col1:
         if st.button(item.symbol, key=f"watchlist_{item.id}"):
-            ticker_symbol = item.symbol
+            st.session_state.ticker_symbol = item.symbol
+            st.rerun()
     with col2:
         if st.button("❌", key=f"remove_{item.id}"):
             remove_from_watchlist(item.symbol)
             st.rerun()
 
 # Main content
-if ticker_symbol:
+if st.session_state.ticker_symbol:
     # Add to search history
-    add_search_history(ticker_symbol, time_period)
+    add_search_history(st.session_state.ticker_symbol, st.session_state.time_period)
 
     # Fetch data
     with st.spinner('Fetching stock data...'):
-        hist_data, company_info = get_stock_data(ticker_symbol, time_period)
+        hist_data, company_info = get_stock_data(st.session_state.ticker_symbol, st.session_state.time_period)
 
     if hist_data is not None and company_info is not None:
         # Add to watchlist button
         col1, col2, col3 = st.columns([2, 1, 1])
         with col1:
-            st.title(f"{company_info.get('longName', ticker_symbol)}")
+            st.title(f"{company_info.get('longName', st.session_state.ticker_symbol)}")
         with col2:
             if st.button("➕ Add to Watchlist"):
-                add_to_watchlist(ticker_symbol)
-                st.success(f"Added {ticker_symbol} to watchlist!")
+                add_to_watchlist(st.session_state.ticker_symbol)
+                st.success(f"Added {st.session_state.ticker_symbol} to watchlist!")
         with col3:
             current_price = hist_data['Close'].iloc[-1]
             price_change = current_price - hist_data['Close'].iloc[-2]
@@ -130,7 +143,7 @@ if ticker_symbol:
         st.table(metrics_df)
 
     else:
-        st.error(f"Unable to fetch data for {ticker_symbol}. Please check the symbol and try again.")
+        st.error(f"Unable to fetch data for {st.session_state.ticker_symbol}. Please check the symbol and try again.")
 
 else:
     st.info("Please enter a stock symbol to begin analysis.")
