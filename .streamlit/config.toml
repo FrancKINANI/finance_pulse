@@ -1,7 +1,13 @@
 [server]
 headless = true
-address = "0.0.0.0"
+address = "localhost"  # Changed from "0.0.0.0" for better security
 port = 5000
+enableCORS = true
+enableXsrfProtection = true
+
+[browser]
+serverAddress = "localhost"  # Added to ensure proper local access
+serverPort = 5000
 
 [theme]
 base = "dark"
@@ -10,3 +16,6 @@ backgroundColor = "#0E1117"
 secondaryBackgroundColor = "#262730"
 textColor = "#FAFAFA"
 font = "sans serif"
+
+[global]
+developmentMode = false  # Added for production security

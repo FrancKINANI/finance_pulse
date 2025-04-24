@@ -1,29 +1,37 @@
+import os
 from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, Boolean, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from datetime import datetime
 
-# Create the database engine
-engine = create_engine('sqlite:///stock_analysis.db', echo=True)
+try:
+    engine = create_engine('mysql+pymysql://root:Justine%402227@localhost/finance_pulse?charset=utf8mb4', 
+                         pool_recycle=3600,
+                         pool_pre_ping=True,
+                         echo=False)  # Set echo to False to reduce console output
+except Exception as e:
+    print(f"Database connection error: {e}")
+    raise
+
 Base = declarative_base()
 Session = sessionmaker(bind=engine)
 
 class Watchlist(Base):
     __tablename__ = 'watchlists'
     
-    id = Column(Integer, primary_key=True)
-    symbol = Column(String, nullable=False)
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    symbol = Column(String(10), nullable=False)
     added_date = Column(DateTime, default=datetime.utcnow)
-    notes = Column(String)
+    notes = Column(String(255))
     is_favorite = Column(Boolean, default=False)
 
 class SearchHistory(Base):
     __tablename__ = 'search_history'
     
-    id = Column(Integer, primary_key=True)
-    symbol = Column(String, nullable=False)
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    symbol = Column(String(10), nullable=False)
     search_date = Column(DateTime, default=datetime.utcnow)
-    period = Column(String)
+    period = Column(String(10))
 
 def init_db():
     """Initialize the database by creating all tables"""

@@ -1,7 +1,7 @@
 [project]
-name = "repl-nix-workspace"
+name = "finance-pulse"
 version = "0.1.0"
-description = "Add your description here"
+description = "A stock analysis dashboard built with Streamlit"
 requires-python = ">=3.11"
 dependencies = [
     "numpy>=2.2.2",
@@ -12,3 +12,9 @@ dependencies = [
     "streamlit>=1.42.0",
     "yfinance>=0.2.52",
 ]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[project.scripts]
+finance-pulse = "app:main"
